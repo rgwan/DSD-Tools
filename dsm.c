@@ -13,6 +13,23 @@ char DSD_ConvertSamples(short int input)
 	else
 		return -100;
 }
+int acc_1 = 0;//Integrator1
+int acc_2 = 0;//Integrator 2
+char DSD_ConvertSamples_2(short int input)
+{//2 order Delta_Sigma Modulator
+	int feedback;//which is 1-bit DAC
+	if(acc_2 > 0)
+		feedback = 32768;
+	else
+		feedback = -32768;
+	acc_1 += input - feedback;
+	acc_2 += acc_1 - feedback;
+	if(acc_2 > 0)
+		return 100;
+	else
+		return -100;	
+}
+
 int main()
 {
 	FILE *fp1, *fp2;
@@ -24,7 +41,7 @@ int main()
 	while(!feof(fp1))
 	{//No oversampling
 		fread(&out, 2, 1, fp1);
-		dsd = DSD_ConvertSamples(out);
+		dsd = DSD_ConvertSamples_2(out);
 		fwrite(&dsd,1 ,1, fp2);
 	}
 	fclose(fp1);
