@@ -34,6 +34,53 @@ char DSD_ConvertSamples_2(short int input)
 		return -100;	
 }
 
+float acc_4_1 = 0.133544;/* Magic number */
+float acc_4_2 = -0.040005;
+float acc_4_3 = -0.015113;
+float acc_4_4 = -0.018597;
+int dithering = 0;
+char DSD_ConvertSamples_4(float input)
+{//a1=1/3, a2=3/25, a3=1/10 a4=1/10 b1=6/5 b6=1 c1=1/6
+	float feedback1, feedback2, feedback3;
+	if(input > 1.0)
+		input = 1.0;
+	if(input < -1.0)
+		input = -1.0;
+	
+	input *= 0.8;
+	/*if(input < 1E-6 && input > -1E-6)
+	{
+		if(dithering)
+		{
+			input = 1E-5;
+			dithering = 0;
+		}
+		else
+		{
+			input = -1E-5;
+			dithering = 1;
+		}
+	}*/
+	
+	if(acc_4_4 > 0.0)
+		feedback1 = 1.0;
+	else
+		feedback1 = -1.0;
+	
+	acc_4_1 += (1.0/3.0) * (input - feedback1);
+	feedback2 = (6.0/5.0) * acc_4_1;
+	
+	acc_4_2 += (3.0/25.0) * acc_4_1;
+	feedback3 = 1.0 * acc_4_2;
+
+	acc_4_3 += (1.0/10.0) * (acc_4_2 - (1.0/6.0) * acc_4_4);
+	acc_4_4 += (1.0/10.0) * (acc_4_3 + feedback2 + feedback3 - feedback1);
+	
+	if(acc_4_4 > 0.0)
+		return 100;
+	return -100;
+}
+
 int main()
 {
 	FILE *fp1, *fp2;
